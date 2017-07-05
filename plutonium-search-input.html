@@ -1,0 +1,66 @@
+<link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="shared-icons.html">
+
+<dom-module id="plutonium-search-input">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+
+            input {
+                font: inherit;
+                outline: none;
+                box-shadow: none;
+                border: none;
+                width: 100%;
+                text-align: left;
+            }
+
+            /*paper-input-container {*/
+            /*@apply(--paper-input-container-shared-input-style);*/
+            /*}*/
+        </style>
+
+        <paper-input-container>
+            <iron-icon icon="sharedicons:search" slot="prefix"></iron-icon>
+            <label slot="label">Your name</label>
+            <iron-input slot="input">
+                <input/>
+            </iron-input>
+            <!--TODO: Hybridize-->
+            <!--In Polymer 1.0, you would use `<input is="iron-input" slot="input">` instead of the above.-->
+        </paper-input-container>
+
+        <h2>Hello [[prop1]]!</h2>
+    </template>
+
+    <script>
+        /**
+         * `plutonium-search-input`
+         * Search input for application main toolbar.
+         *
+         * @customElement
+         * @polymer
+         * @demo demo/index.html
+         */
+        class PlutoniumSearchInput extends Polymer.Element {
+            static get is() {
+                return 'plutonium-search-input';
+            }
+
+            static get properties() {
+                return {
+                    prop1: {
+                        type: String,
+                        value: 'plutonium-search-input'
+                    }
+                };
+            }
+        }
+
+        window.customElements.define(PlutoniumSearchInput.is, PlutoniumSearchInput);
+    </script>
+</dom-module>

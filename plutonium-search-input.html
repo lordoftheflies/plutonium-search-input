@@ -39,7 +39,7 @@
         </paper-input>
 
         <template is="dom-if" if="[[hasSearchMatch]]">
-            <iron-list items="[[filterCache(cache)]]" as="choice" attr-for-selected="[[cacheKey]]" multi-selection>
+            <iron-list items="[[_filteredCache]]" as="choice" attr-for-selected="[[cacheKey]]" multi-selection>
                 <template>
                     <div>[[str(choice, cacheKey)]]</div>
                 </template>
@@ -159,19 +159,21 @@
                         type: String,
                         notify: true
                     },
-                    value: {
-                        type: String,
-                        notify: true
-                    },
 
                     cache: {
                         type: Array,
                         value: []
                     },
+                    _filteredCache: {
+                        type: Array,
+                        value: [],
+                        notify: true
+                    },
 
                     cacheKey: {
                         type: String,
-                        value: 'id'
+                        notify: true,
+                        value: null
                     },
 
                     relativeSearchUrl: {
@@ -196,7 +198,7 @@
 
             static get observers() {
                 return [
-                    'observeState(value, cache)'
+                    'observeState(value, cache, cacheKey)'
                 ]
             }
 
@@ -230,13 +232,14 @@
             }
 
 
-            observeState(value, cache) {
+            observeState(value, cache, key) {
                 this.hasSearchInput = this.safeGet(value) !== '';
                 if (this.hasSearchInput) {
                     this.log('has search input');
                     this.hasSearchMatch = this.safeGet(cache).length > 0;
                     if (this.hasSearchMatch) this.log('has some prefetched data in the cache');
                 }
+                this._filteredCache = this.filterCache(value, cache, key);
             }
 
 //            isLike(searchString) {
@@ -259,19 +262,24 @@
 //                }
 //            }
 
-            filterCache(items) {
-                this.log('dassssssssszom');
-                return items.filter(function (cacheEntity) { // Array.prototype.filter
-                    if (self.cacheKey !== undefined || self.cacheKey !== null) {
-                        if (cacheEntity[self.cacheKey]) {
-                            var last = cacheEntity[self.cacheKey].toLowerCase();
-                            return (last.indexOf(string) != -1);
-                        } else return false;
+            filterCache(value, items, key) {
+                var results = items.filter(function (cacheEntity) { // Array.prototype.filter
+                    console.log('.....................................', cacheEntity, self.cacheKey);
+                    if (key !== undefined || key !== null) {
+                        if (cacheEntity[key]) {
+                            var last = cacheEntity[key].toLowerCase();
+                            return (last.indexOf(value) != -1);
+                        } else {
+                            var last = cacheEntity.toLowerCase();
+                            return (last.indexOf(value) != -1);
+                        }
                     } else {
                         var last = cacheEntity.toLowerCase();
-                        return (last.indexOf(string) != -1);
+                        return (last.indexOf(value) != -1);
                     }
                 });
+                this.log('filter out by pattern "' + value + '" ' + results.length + ' from ' + items.length + ' cached items.');
+                return results;
             }
 
         }

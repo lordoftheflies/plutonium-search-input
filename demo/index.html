@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
 
@@ -13,18 +13,33 @@
     <link rel="import" href="../plutonium-search-input.html">
 
     <custom-style>
-      <style is="custom-style" include="demo-pages-shared-styles">
-      </style>
+        <style is="custom-style" include="demo-pages-shared-styles">
+        </style>
     </custom-style>
-  </head>
-  <body>
-    <div class="vertical-section-container centered">
-      <h3>Basic plutonium-search-input demo</h3>
-      <demo-snippet>
+</head>
+<body>
+<div class="vertical-section-container centered">
+    <h3>Basic plutonium-search-input demo</h3>
+    <demo-snippet>
         <template>
-          <plutonium-search-input label="Search ..."></plutonium-search-input>
+
+            <plutonium-search-input
+                    id="sbwl"
+                    label="Search in a simple list"
+                    cache='["alfa", "beta", "gamma"]'>
+
+            </plutonium-search-input>
+
+            <plutonium-search-input
+                    id="sbwol"
+                    label="Search in list of objects"
+                    cache-key="name"
+                    cache='[{ "name": "alfa"}, { "name": "beta"}, { "name": "gamma"}, {"name": "delta"}]'>
+
+            </plutonium-search-input>
+
         </template>
-      </demo-snippet>
-    </div>
-  </body>
+    </demo-snippet>
+</div>
+</body>
 </html>

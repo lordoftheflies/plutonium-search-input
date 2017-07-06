@@ -1,6 +1,9 @@
 <link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="../polymer/lib/mixins/gesture-event-listeners.html">
 <link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../iron-list/iron-list.html">
 <link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
 <link rel="import" href="shared-icons.html">
 
 <dom-module id="plutonium-search-input">
@@ -24,20 +27,118 @@
             /*}*/
         </style>
 
-        <paper-input-container>
-            <iron-icon icon="sharedicons:search" slot="prefix"></iron-icon>
-            <label slot="label">Your name</label>
-            <iron-input slot="input">
-                <input/>
-            </iron-input>
+        <paper-input label="[[label]]" value="{{value}}">
+            <paper-icon-button icon="sharedicons:search" slot="prefix" on-tap="onPerformSearch"></paper-icon-button>
+            <template is="dom-if" if="[[hasSearchInput]]">
+                <paper-icon-button id="clearButton" icon="sharedicons:clear" slot="suffix" on-tap="onClearInput"></paper-icon-button>
+            </template>
+
             <!--TODO: Hybridize-->
             <!--In Polymer 1.0, you would use `<input is="iron-input" slot="input">` instead of the above.-->
-        </paper-input-container>
 
-        <h2>Hello [[prop1]]!</h2>
+        </paper-input>
+
+        <template is="dom-if" if="[[hasSearchMatch]]">
+            <iron-list items="[[filterCache(cache)]]" as="choice" attr-for-selected="[[cacheKey]]" multi-selection>
+                <template>
+                    <div>[[str(choice, cacheKey)]]</div>
+                </template>
+            </iron-list>
+        </template>
+
     </template>
 
     <script>
+        WidgetMixin = function (superClass) {
+            return class extends superClass {
+                constructor() {
+                    super();
+                }
+
+                static get properties() {
+                    return {
+                        backendUrl: {
+                            type: String
+                        }
+                    };
+                }
+
+
+                str(object, attrForSelected) {
+//                    result = '';
+
+                    if (attrForSelected === undefined || attrForSelected === null) {
+                        return [JSON.stringify(object)];
+                    } else {
+                        if (object instanceof Array) {
+                            return object.filter(item => kpids.indexOf(item[attrForSelected]) > -1);
+                        } else if (object instanceof Object) {
+                            return [object[attrForSelected]]
+                        } else {
+                            return [object]
+                        }
+                    }
+
+                }
+
+                safeGet(object, defaultValue) {
+                    if (defaultValue !== undefined || defaultValue !== null) {
+                        return object;
+                    } else {
+                        if (defaultValue === undefined || defaultValue === null) {
+                            return null;
+                        } else {
+                            return defaultValue;
+                        }
+                    }
+                }
+
+                log(message) {
+                    console.debug((this.id === undefined || this.id === null || this.id === "") ? this.tagName.toLowerCase() : this.tagName.toLowerCase() + "#" + this.id, message);
+                }
+
+                info(message) {
+                    console.info(superClass.is, message);
+                }
+
+                success(message) {
+                    console.info(superClass.is, message);
+                }
+
+                error(message) {
+                    console.error(superClass.is, message);
+                }
+            }
+        }
+
+        //        WidgetMixin = function (superClass) {
+        //            return class extends superClass {
+        //                constructor() {
+        //                    super();
+        //                    this.addEventListener('keypress', e => this.handlePress(e));
+        //                }
+        //
+        //                static get properties() {
+        //                    return {
+        //                        bar: {
+        //                            type: Object
+        //                        }
+        //                    };
+        //                }
+        //
+        //                static get observers() {
+        //                    return ['_barChanged(bar.*)'];
+        //                }
+        //
+        //                _barChanged(bar) { ...
+        //                }
+        //
+        //                handlePress(e) {
+        //                    console.log('key pressed: ' + e.charCode);
+        //                }
+        //            }
+        //        }
+
         /**
          * `plutonium-search-input`
          * Search input for application main toolbar.
@@ -46,19 +147,133 @@
          * @polymer
          * @demo demo/index.html
          */
-        class PlutoniumSearchInput extends Polymer.Element {
+//        class PlutoniumSearchInput extends Polymer.Element {
+        class PlutoniumSearchInput extends WidgetMixin(Polymer.GestureEventListeners(Polymer.Element)) {
             static get is() {
                 return 'plutonium-search-input';
             }
 
             static get properties() {
                 return {
-                    prop1: {
+                    value: {
                         type: String,
-                        value: 'plutonium-search-input'
+                        notify: true
+                    },
+                    value: {
+                        type: String,
+                        notify: true
+                    },
+
+                    cache: {
+                        type: Array,
+                        value: []
+                    },
+
+                    cacheKey: {
+                        type: String,
+                        value: 'id'
+                    },
+
+                    relativeSearchUrl: {
+                        type: String,
+                        value: null
+                    },
+
+                    hasSearchInput: {
+                        type: Boolean,
+                        notify: true,
+                        value: false
+                    },
+
+                    hasSearchMatch: {
+                        type: Boolean,
+                        notify: true,
+                        value: false
                     }
+
                 };
             }
+
+            static get observers() {
+                return [
+                    'observeState(value, cache)'
+                ]
+            }
+
+
+            constructor() {
+                super();
+
+                this.addEventListener('keypress', e => this.handlePress(e));
+            }
+
+////
+            attached() {
+                Polymer.Gestures.addListener(this.$.clearButton, 'tap', e => this.onClearInput(e));
+////                this.$.clearButton.addEventListener('tap', this.onClearInput);
+////                Polymer.Gestures.addListener(this.$.clearButton, 'tap', (event, args) => this._onClearInput(event, args));
+            }
+
+            onClearInput(event) {
+                this.set('value', '');
+                console.debug('clear input');
+            }
+
+            handlePress() {
+                this.log('perform search for "' + this.value + '"');
+//                this.log('key pressed: ' + e.charCode);
+//                document.querySelector('iron-list').fire('iron-resize');
+            }
+
+            onPerformSearch(event) {
+                this.log('clear input');
+            }
+
+
+            observeState(value, cache) {
+                this.hasSearchInput = this.safeGet(value) !== '';
+                if (this.hasSearchInput) {
+                    this.log('has search input');
+                    this.hasSearchMatch = this.safeGet(cache).length > 0;
+                    if (this.hasSearchMatch) this.log('has some prefetched data in the cache');
+                }
+            }
+
+//            isLike(searchString) {
+//                var self = this;
+//                if (!searchString) {
+//                    // set filter to null to disable filtering
+//                    return null;
+//                } else {
+//                    // return a filter function for the current search string
+//                    searchString = searchString.toLowerCase();
+//                    return function (cacheEntity) {
+//                        if (self.cacheKey !== undefined || self.cacheKey !== null) {
+//                            var last = cacheEntity[self.cacheKey] ? cacheEntity[self.cacheKey].toLowerCase() : '';
+//                            return (last.indexOf(string) != -1);
+//                        } else {
+//                            var last = cacheEntity.toLowerCase();
+//                            return (last.indexOf(string) != -1);
+//                        }
+//                    };
+//                }
+//            }
+
+            filterCache(items) {
+                this.log('dassssssssszom');
+                return items.filter(function (cacheEntity) { // Array.prototype.filter
+                    if (self.cacheKey !== undefined || self.cacheKey !== null) {
+                        if (cacheEntity[self.cacheKey]) {
+                            var last = cacheEntity[self.cacheKey].toLowerCase();
+                            return (last.indexOf(string) != -1);
+                        } else return false;
+                    } else {
+                        var last = cacheEntity.toLowerCase();
+                        return (last.indexOf(string) != -1);
+                    }
+                });
+            }
+
         }
 
         window.customElements.define(PlutoniumSearchInput.is, PlutoniumSearchInput);

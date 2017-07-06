@@ -4,6 +4,7 @@
 <link rel="import" href="../iron-list/iron-list.html">
 <link rel="import" href="../paper-input/paper-input.html">
 <link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-progress/paper-progress.html">
 <link rel="import" href="shared-icons.html">
 
 <dom-module id="plutonium-search-input">
@@ -37,6 +38,8 @@
             <!--In Polymer 1.0, you would use `<input is="iron-input" slot="input">` instead of the above.-->
 
         </paper-input>
+
+        <paper-progress indeterminate></paper-progress>
 
         <template is="dom-if" if="[[hasSearchMatch]]">
             <iron-list items="[[_filteredCache]]" as="choice" attr-for-selected="[[cacheKey]]" multi-selection>

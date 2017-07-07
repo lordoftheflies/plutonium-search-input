@@ -41,7 +41,7 @@
         </paper-input>
 
         <template is="dom-if" if="[[_showResults]]">
-            <paper-spinner active="[[_loadingCache]]" hidden="[[!_loadingCache]]"></paper-spinner>
+            <paper-spinner active="[[_loadingCache]]"></paper-spinner>
             <template is="dom-if" if="[[!_loadingCache]]">
                 <iron-list items="[[_filteredCache]]" as="choice" attr-for-selected="[[cacheKey]]" multi-selection>
                     <template>
@@ -185,7 +185,6 @@
 
             static get observers() {
                 return [
-                    'observeValue(value)',
                     'observeState(value, cache, cacheKey)'
                 ]
             }
@@ -205,20 +204,25 @@
             onClearInput(event) {
                 this.set('value', '');
                 this.log('clear input');
+                this.set('_loadingCache', false);
             }
 
             onPerformSearch(event) {
                 this.log('perform search');
+                this.set('_loadingCache', true);
             }
 
             onFocus(event) {
                 this.log('got the focus');
                 this.set('_showResults', true);
+                var value = this.get('value');
+                this.set('_hasInput', !(value === undefined || value === null || value === ''));
             }
 
             onBlur(event) {
                 this.log('blurred');
                 this.set('_showResults', false);
+                this.set('_hasInput', false);
             }
 
             handlePress(event) {
@@ -230,10 +234,6 @@
                 } else {
                     this.log('filter search for "' + this.value + '" ' + JSON.stringify(event));
                 }
-            }
-
-            observeValue(value) {
-                this._hasInput = !(value === undefined || value === null || value === '');
             }
 
             observeState(value, cache, key) {

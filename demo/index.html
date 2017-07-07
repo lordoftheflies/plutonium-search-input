@@ -28,6 +28,8 @@
                     label="Search">
             </plutonium-search-input>
 
+            <button id="sbb">Fake cache response</button>
+
             <plutonium-search-input
                     id="sbwl"
                     label="Search in a simple list"
@@ -40,6 +42,17 @@
                     cache-key="name"
                     cache='[{ "name": "alfa"}, { "name": "beta"}, { "name": "gamma"}, {"name": "delta"}]'>
             </plutonium-search-input>
+
+            <script>
+                var sb = document.getElementById('sb');
+                var sbb = document.getElementById('sbb');
+                sbb.addEventListener('click', function() {
+                   sb.cache = ['first', 'second', 'third', 'fourth', 'fifth'];
+                   console.log('Set cache on #sb');
+                });
+                var sbwl = document.getElementById('sbwl');
+                var sbwol = document.getElementById('sbwol');
+            </script>
 
         </template>
     </demo-snippet>

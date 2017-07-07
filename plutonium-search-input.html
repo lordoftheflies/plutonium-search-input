@@ -30,11 +30,13 @@
         </style>
 
         <paper-input label="[[label]]" value="{{value}}">
-            <paper-icon-button icon="sharedicons:search" slot="prefix" on-tap="onPerformSearch"></paper-icon-button>
+            <paper-icon-button icon="sharedicons:search" slot="prefix" on-tap="onPerformSearch" title="Perform search on server"></paper-icon-button>
             <template is="dom-if" if="[[_hasInput]]">
-                <paper-icon-button id="clearButton" icon="sharedicons:clear" slot="suffix" on-tap="onClearInput"></paper-icon-button>
+                <paper-icon-button id="clearButton" icon="sharedicons:clear" slot="suffix" on-tap="onClearInput" title="Clear search parameters"></paper-icon-button>
             </template>
-
+            <template is="dom-if" if="[[_showResults]]">
+                <paper-icon-button id="detailsButton" icon="sharedicons:details" slot="suffix" on-tap="onDetailedSearch" title="Show detailed search"></paper-icon-button>
+            </template>
             <!--TODO: Hybridize-->
             <!--In Polymer 1.0, you would use `<input is="iron-input" slot="input">` instead of the above.-->
 
@@ -44,7 +46,7 @@
             <div class="layout horizontal center-justified">
                 <paper-spinner active="[[_loadingCache]]"></paper-spinner>
             </div>
-            <iron-list items="[[_filteredCache]]" as="choice" attr-for-selected="[[cacheKey]]" multi-selection>
+            <iron-list items="[[_filteredCache]]" as="choice" attr-for-selected="[[cacheKey]]" multi-selection title="List of cached results">
                 <template>
                     <div>[[str(choice, cacheKey)]]</div>
                 </template>
@@ -207,6 +209,14 @@
                 this.log('clear input');
                 this.set('_loadingCache', false);
                 this.set('_showResults', false);
+            }
+
+            onDetailedSearch(event) {
+                this.dispatchEvent(new CustomEvent('plutonium-search-open', {
+                    'detail': {
+                        'data': this.get('value')
+                    }
+                }));
             }
 
             onPerformSearch(event) {

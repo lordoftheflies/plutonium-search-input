@@ -188,12 +188,14 @@
                 ]
             }
 
-
             constructor() {
                 super();
                 this.addEventListener('keypress', e => this.handlePress(e));
                 this.addEventListener('focus', e => this.onFocus(e));
                 this.addEventListener('blur', e => this.onBlur(e));
+
+//                this.addEventListener('plutonium-search-request', e => this.onPerformSearch(e));
+                this.addEventListener('plutonium-search-response', e => this.onPerformSearchSuccess(e));
             }
 
             attached() {
@@ -210,6 +212,16 @@
             onPerformSearch(event) {
                 this.log('perform search');
                 this.set('_loadingCache', true);
+                this.dispatchEvent(new CustomEvent('plutonium-search-request', {
+                    'detail': {
+                        'data': this.get('value')
+                    }
+                }));
+            }
+
+            onPerformSearchSuccess(event) {
+                this.set('_loadingCache', false);
+                this.set('cache', event.detail.data);
             }
 
             onFocus(event) {

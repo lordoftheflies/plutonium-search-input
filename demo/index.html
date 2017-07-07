@@ -29,6 +29,7 @@
             </plutonium-search-input>
 
             <button id="sbb">Fake cache response</button>
+            <button id="sbb2">Fire 'plutonium-search-response' event</button>
 
             <plutonium-search-input
                     id="sbwl"
@@ -46,10 +47,19 @@
             <script>
                 var sb = document.getElementById('sb');
                 var sbb = document.getElementById('sbb');
-                sbb.addEventListener('click', function() {
-                   sb.cache = ['first', 'second', 'third', 'fourth', 'fifth'];
-                   console.log('Set cache on #sb');
+                var sbb2 = document.getElementById('sbb2');
+                sbb.addEventListener('click', function () {
+                    sb.cache = ['first', 'second', 'third', 'fourth', 'fifth'];
+                    console.log('Set cache on #sb');
                 });
+                sbb2.addEventListener('click', function () {
+                    sb.dispatchEvent(new CustomEvent('plutonium-search-response', {
+                        'detail': {
+                            'data': ['first', 'second', 'third', 'fourth', 'fifth', 'sixth']
+                        }
+                    }));
+                });
+
                 var sbwl = document.getElementById('sbwl');
                 var sbwol = document.getElementById('sbwol');
             </script>

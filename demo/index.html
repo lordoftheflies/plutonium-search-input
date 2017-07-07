@@ -24,10 +24,14 @@
         <template>
 
             <plutonium-search-input
+                    id="sb"
+                    label="Search">
+            </plutonium-search-input>
+
+            <plutonium-search-input
                     id="sbwl"
                     label="Search in a simple list"
                     cache='["alfa", "beta", "gamma", "visitor", "coffee", "shop", "shoe"]'>
-
             </plutonium-search-input>
 
             <plutonium-search-input
@@ -35,7 +39,6 @@
                     label="Search in list of objects"
                     cache-key="name"
                     cache='[{ "name": "alfa"}, { "name": "beta"}, { "name": "gamma"}, {"name": "delta"}]'>
-
             </plutonium-search-input>
 
         </template>

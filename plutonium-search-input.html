@@ -5,7 +5,7 @@
 <link rel="import" href="../iron-list/iron-list.html">
 <link rel="import" href="../paper-input/paper-input.html">
 <link rel="import" href="../paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../paper-progress/paper-progress.html">
+<link rel="import" href="../paper-spinner/paper-spinner.html">
 <link rel="import" href="shared-icons.html">
 
 <dom-module id="plutonium-search-input">
@@ -31,7 +31,7 @@
 
         <paper-input label="[[label]]" value="{{value}}">
             <paper-icon-button icon="sharedicons:search" slot="prefix" on-tap="onPerformSearch"></paper-icon-button>
-            <template is="dom-if" if="[[hasSearchInput]]">
+            <template is="dom-if" if="[[_hasInput]]">
                 <paper-icon-button id="clearButton" icon="sharedicons:clear" slot="suffix" on-tap="onClearInput"></paper-icon-button>
             </template>
 
@@ -40,15 +40,15 @@
 
         </paper-input>
 
-
-        <template is="dom-if" if="[[hasSearchMatch]]">
-            <paper-progress indeterminate class="flex"></paper-progress>
-
-            <iron-list items="[[_filteredCache]]" as="choice" attr-for-selected="[[cacheKey]]" multi-selection>
-                <template>
-                    <div>[[str(choice, cacheKey)]]</div>
-                </template>
-            </iron-list>
+        <template is="dom-if" if="[[_showResults]]">
+            <paper-spinner active="[[_loadingCache]]" hidden="[[!_loadingCache]]"></paper-spinner>
+            <template is="dom-if" if="[[!_loadingCache]]">
+                <iron-list items="[[_filteredCache]]" as="choice" attr-for-selected="[[cacheKey]]" multi-selection>
+                    <template>
+                        <div>[[str(choice, cacheKey)]]</div>
+                    </template>
+                </iron-list>
+            </template>
         </template>
 
     </template>
@@ -98,6 +98,17 @@
                     }
                 }
 
+                safeArrayGet(array) {
+                    if (array === undefined || array === null) {
+                        return [];
+                    } else if (array.length > 0) {
+                        return array;
+                    } else {
+                        return [];
+                    }
+
+                }
+
                 log(message) {
                     console.debug((this.id === undefined || this.id === null || this.id === "") ? this.tagName.toLowerCase() : this.tagName.toLowerCase() + "#" + this.id, message);
                 }
@@ -116,34 +127,6 @@
             }
         }
 
-        //        WidgetMixin = function (superClass) {
-        //            return class extends superClass {
-        //                constructor() {
-        //                    super();
-        //                    this.addEventListener('keypress', e => this.handlePress(e));
-        //                }
-        //
-        //                static get properties() {
-        //                    return {
-        //                        bar: {
-        //                            type: Object
-        //                        }
-        //                    };
-        //                }
-        //
-        //                static get observers() {
-        //                    return ['_barChanged(bar.*)'];
-        //                }
-        //
-        //                _barChanged(bar) { ...
-        //                }
-        //
-        //                handlePress(e) {
-        //                    console.log('key pressed: ' + e.charCode);
-        //                }
-        //            }
-        //        }
-
         /**
          * `plutonium-search-input`
          * Search input for application main toolbar.
@@ -160,11 +143,19 @@
 
             static get properties() {
                 return {
+                    label: {
+                        type: String,
+                        notify: true
+                    },
                     value: {
                         type: String,
                         notify: true
                     },
-
+                    cacheKey: {
+                        type: String,
+                        notify: true,
+                        value: null
+                    },
                     cache: {
                         type: Array,
                         value: []
@@ -174,35 +165,27 @@
                         value: [],
                         notify: true
                     },
-
-                    cacheKey: {
-                        type: String,
-                        notify: true,
-                        value: null
-                    },
-
-                    relativeSearchUrl: {
-                        type: String,
-                        value: null
-                    },
-
-                    hasSearchInput: {
+                    _loadingCache: {
                         type: Boolean,
-                        notify: true,
-                        value: false
+                        value: false,
+                        notify: true
                     },
-
-                    hasSearchMatch: {
+                    _showResults: {
                         type: Boolean,
-                        notify: true,
-                        value: false
+                        value: false,
+                        notify: true
+                    },
+                    _hasInput: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
                     }
-
                 };
             }
 
             static get observers() {
                 return [
+                    'observeValue(value)',
                     'observeState(value, cache, cacheKey)'
                 ]
             }
@@ -210,40 +193,50 @@
 
             constructor() {
                 super();
-
                 this.addEventListener('keypress', e => this.handlePress(e));
+                this.addEventListener('focus', e => this.onFocus(e));
+                this.addEventListener('blur', e => this.onBlur(e));
             }
 
-////
             attached() {
                 Polymer.Gestures.addListener(this.$.clearButton, 'tap', e => this.onClearInput(e));
-////                this.$.clearButton.addEventListener('tap', this.onClearInput);
-////                Polymer.Gestures.addListener(this.$.clearButton, 'tap', (event, args) => this._onClearInput(event, args));
             }
 
             onClearInput(event) {
                 this.set('value', '');
-                console.debug('clear input');
-            }
-
-            handlePress() {
-                this.log('perform search for "' + this.value + '"');
-//                this.log('key pressed: ' + e.charCode);
-//                document.querySelector('iron-list').fire('iron-resize');
-            }
-
-            onPerformSearch(event) {
                 this.log('clear input');
             }
 
+            onPerformSearch(event) {
+                this.log('perform search');
+            }
+
+            onFocus(event) {
+                this.log('got the focus');
+                this.set('_showResults', true);
+            }
+
+            onBlur(event) {
+                this.log('blurred');
+                this.set('_showResults', false);
+            }
+
+            handlePress(event) {
+                this.log('key ' + event.keyCode + ' pressed');
+                if (event.keyCode == 27) {
+                    this.onClearInput(event);
+                } else if (event.keyCode == 13) {
+                    this.onPerformSearch(event);
+                } else {
+                    this.log('filter search for "' + this.value + '" ' + JSON.stringify(event));
+                }
+            }
+
+            observeValue(value) {
+                this._hasInput = !(value === undefined || value === null || value === '');
+            }
 
             observeState(value, cache, key) {
-                this.hasSearchInput = this.safeGet(value) !== '';
-                if (this.hasSearchInput) {
-                    this.log('has search input');
-                    this.hasSearchMatch = this.safeGet(cache).length > 0;
-                    if (this.hasSearchMatch) this.log('has some prefetched data in the cache');
-                }
                 this._filteredCache = this.filterCache(value, cache, key);
             }
 

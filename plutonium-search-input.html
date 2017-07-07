@@ -41,16 +41,15 @@
         </paper-input>
 
         <template is="dom-if" if="[[_showResults]]">
-            <paper-spinner active="[[_loadingCache]]"></paper-spinner>
-            <template is="dom-if" if="[[!_loadingCache]]">
-                <iron-list items="[[_filteredCache]]" as="choice" attr-for-selected="[[cacheKey]]" multi-selection>
-                    <template>
-                        <div>[[str(choice, cacheKey)]]</div>
-                    </template>
-                </iron-list>
-            </template>
+            <div class="layout horizontal center-justified">
+                <paper-spinner active="[[_loadingCache]]"></paper-spinner>
+            </div>
+            <iron-list items="[[_filteredCache]]" as="choice" attr-for-selected="[[cacheKey]]" multi-selection>
+                <template>
+                    <div>[[str(choice, cacheKey)]]</div>
+                </template>
+            </iron-list>
         </template>
-
     </template>
 
     <script>
@@ -185,7 +184,7 @@
 
             static get observers() {
                 return [
-                    'observeState(value, cache, cacheKey)'
+                    'observeCache(value, cache, cacheKey)'
                 ]
             }
 
@@ -205,6 +204,7 @@
                 this.set('value', '');
                 this.log('clear input');
                 this.set('_loadingCache', false);
+                this.set('_showResults', false);
             }
 
             onPerformSearch(event) {
@@ -232,37 +232,15 @@
                 } else if (event.keyCode == 13) {
                     this.onPerformSearch(event);
                 } else {
+                    this.set('_showResults', true);
+                    var value = this.get('value');
+                    this.set('_hasInput', !(value === undefined || value === null || value === ''));
                     this.log('filter search for "' + this.value + '" ' + JSON.stringify(event));
                 }
             }
 
-            observeState(value, cache, key) {
-                this._filteredCache = this.filterCache(value, cache, key);
-            }
-
-//            isLike(searchString) {
-//                var self = this;
-//                if (!searchString) {
-//                    // set filter to null to disable filtering
-//                    return null;
-//                } else {
-//                    // return a filter function for the current search string
-//                    searchString = searchString.toLowerCase();
-//                    return function (cacheEntity) {
-//                        if (self.cacheKey !== undefined || self.cacheKey !== null) {
-//                            var last = cacheEntity[self.cacheKey] ? cacheEntity[self.cacheKey].toLowerCase() : '';
-//                            return (last.indexOf(string) != -1);
-//                        } else {
-//                            var last = cacheEntity.toLowerCase();
-//                            return (last.indexOf(string) != -1);
-//                        }
-//                    };
-//                }
-//            }
-
-            filterCache(value, items, key) {
-                var results = items.filter(function (cacheEntity) { // Array.prototype.filter
-                    console.log('.....................................', cacheEntity, self.cacheKey);
+            observeCache(value, cache, key) {
+                this._filteredCache = cache.filter(function (cacheEntity) { // Array.prototype.filter
                     if (key !== undefined || key !== null) {
                         if (cacheEntity[key]) {
                             var last = cacheEntity[key].toLowerCase();
@@ -276,10 +254,8 @@
                         return (last.indexOf(value) != -1);
                     }
                 });
-                this.log('filter out by pattern "' + value + '" ' + results.length + ' from ' + items.length + ' cached items.');
-                return results;
+                this.log('filter out by pattern "' + value + '" ' + this._filteredCache.length + ' from ' + cache.length + ' cached items.');
             }
-
         }
 
         window.customElements.define(PlutoniumSearchInput.is, PlutoniumSearchInput);

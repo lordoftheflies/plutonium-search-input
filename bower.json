@@ -8,7 +8,9 @@
     "iron-iconset-svg": "polymerelements/iron-iconset-svg#^2.0.0",
     "iron-icon": "polymerelements/iron-icon#^2.0.0",
     "paper-icon-button": "polymerelements/paper-icon-button#^2.0.0",
-    "iron-list": "PolymerElements/iron-list#^2.0.3"
+    "iron-list": "PolymerElements/iron-list#^2.0.3",
+    "paper-progress": "PolymerElements/paper-progress#^2.0.1",
+    "paper-spinner": "PolymerElements/paper-spinner#^2.0.0"
   },
   "devDependencies": {
     "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^2.0.0",

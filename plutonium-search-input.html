@@ -1,14 +1,16 @@
 <link rel="import" href="../polymer/polymer-element.html">
 <link rel="import" href="../polymer/lib/mixins/gesture-event-listeners.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../iron-icon/iron-icon.html">
 <link rel="import" href="../iron-list/iron-list.html">
 <link rel="import" href="../paper-input/paper-input.html">
 <link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-spinner/paper-spinner.html">
 <link rel="import" href="shared-icons.html">
 
 <dom-module id="plutonium-search-input">
     <template>
-        <style>
+        <style include="iron-flex">
             :host {
                 display: block;
             }
@@ -29,7 +31,7 @@
 
         <paper-input label="[[label]]" value="{{value}}">
             <paper-icon-button icon="sharedicons:search" slot="prefix" on-tap="onPerformSearch"></paper-icon-button>
-            <template is="dom-if" if="[[hasSearchInput]]">
+            <template is="dom-if" if="[[_hasInput]]">
                 <paper-icon-button id="clearButton" icon="sharedicons:clear" slot="suffix" on-tap="onClearInput"></paper-icon-button>
             </template>
 
@@ -38,14 +40,16 @@
 
         </paper-input>
 
-        <template is="dom-if" if="[[hasSearchMatch]]">
+        <template is="dom-if" if="[[_showResults]]">
+            <div class="layout horizontal center-justified">
+                <paper-spinner active="[[_loadingCache]]"></paper-spinner>
+            </div>
             <iron-list items="[[_filteredCache]]" as="choice" attr-for-selected="[[cacheKey]]" multi-selection>
                 <template>
                     <div>[[str(choice, cacheKey)]]</div>
                 </template>
             </iron-list>
         </template>
-
     </template>
 
     <script>
@@ -68,7 +72,7 @@
 //                    result = '';
 
                     if (attrForSelected === undefined || attrForSelected === null) {
-                        return [JSON.stringify(object)];
+                        return [object];
                     } else {
                         if (object instanceof Array) {
                             return object.filter(item => kpids.indexOf(item[attrForSelected]) > -1);
@@ -93,6 +97,17 @@
                     }
                 }
 
+                safeArrayGet(array) {
+                    if (array === undefined || array === null) {
+                        return [];
+                    } else if (array.length > 0) {
+                        return array;
+                    } else {
+                        return [];
+                    }
+
+                }
+
                 log(message) {
                     console.debug((this.id === undefined || this.id === null || this.id === "") ? this.tagName.toLowerCase() : this.tagName.toLowerCase() + "#" + this.id, message);
                 }
@@ -111,34 +126,6 @@
             }
         }
 
-        //        WidgetMixin = function (superClass) {
-        //            return class extends superClass {
-        //                constructor() {
-        //                    super();
-        //                    this.addEventListener('keypress', e => this.handlePress(e));
-        //                }
-        //
-        //                static get properties() {
-        //                    return {
-        //                        bar: {
-        //                            type: Object
-        //                        }
-        //                    };
-        //                }
-        //
-        //                static get observers() {
-        //                    return ['_barChanged(bar.*)'];
-        //                }
-        //
-        //                _barChanged(bar) { ...
-        //                }
-        //
-        //                handlePress(e) {
-        //                    console.log('key pressed: ' + e.charCode);
-        //                }
-        //            }
-        //        }
-
         /**
          * `plutonium-search-input`
          * Search input for application main toolbar.
@@ -155,11 +142,19 @@
 
             static get properties() {
                 return {
+                    label: {
+                        type: String,
+                        notify: true
+                    },
                     value: {
                         type: String,
                         notify: true
                     },
-
+                    cacheKey: {
+                        type: String,
+                        notify: true,
+                        value: null
+                    },
                     cache: {
                         type: Array,
                         value: []
@@ -169,102 +164,95 @@
                         value: [],
                         notify: true
                     },
-
-                    cacheKey: {
-                        type: String,
-                        notify: true,
-                        value: null
-                    },
-
-                    relativeSearchUrl: {
-                        type: String,
-                        value: null
-                    },
-
-                    hasSearchInput: {
+                    _loadingCache: {
                         type: Boolean,
-                        notify: true,
-                        value: false
+                        value: false,
+                        notify: true
                     },
-
-                    hasSearchMatch: {
+                    _showResults: {
                         type: Boolean,
-                        notify: true,
-                        value: false
+                        value: false,
+                        notify: true
+                    },
+                    _hasInput: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
                     }
-
                 };
             }
 
             static get observers() {
                 return [
-                    'observeState(value, cache, cacheKey)'
+                    'observeCache(value, cache, cacheKey)'
                 ]
             }
 
-
             constructor() {
                 super();
-
                 this.addEventListener('keypress', e => this.handlePress(e));
+                this.addEventListener('focus', e => this.onFocus(e));
+                this.addEventListener('blur', e => this.onBlur(e));
+
+//                this.addEventListener('plutonium-search-request', e => this.onPerformSearch(e));
+                this.addEventListener('plutonium-search-response', e => this.onPerformSearchSuccess(e));
             }
 
-////
             attached() {
                 Polymer.Gestures.addListener(this.$.clearButton, 'tap', e => this.onClearInput(e));
-////                this.$.clearButton.addEventListener('tap', this.onClearInput);
-////                Polymer.Gestures.addListener(this.$.clearButton, 'tap', (event, args) => this._onClearInput(event, args));
             }
 
             onClearInput(event) {
                 this.set('value', '');
-                console.debug('clear input');
-            }
-
-            handlePress() {
-                this.log('perform search for "' + this.value + '"');
-//                this.log('key pressed: ' + e.charCode);
-//                document.querySelector('iron-list').fire('iron-resize');
+                this.log('clear input');
+                this.set('_loadingCache', false);
+                this.set('_showResults', false);
             }
 
             onPerformSearch(event) {
-                this.log('clear input');
+                this.log('perform search');
+                this.set('_loadingCache', true);
+                this.dispatchEvent(new CustomEvent('plutonium-search-request', {
+                    'detail': {
+                        'data': this.get('value')
+                    }
+                }));
             }
 
+            onPerformSearchSuccess(event) {
+                this.set('_loadingCache', false);
+                this.set('cache', event.detail.data);
+            }
 
-            observeState(value, cache, key) {
-                this.hasSearchInput = this.safeGet(value) !== '';
-                if (this.hasSearchInput) {
-                    this.log('has search input');
-                    this.hasSearchMatch = this.safeGet(cache).length > 0;
-                    if (this.hasSearchMatch) this.log('has some prefetched data in the cache');
+            onFocus(event) {
+                this.log('got the focus');
+                this.set('_showResults', true);
+                var value = this.get('value');
+                this.set('_hasInput', !(value === undefined || value === null || value === ''));
+            }
+
+            onBlur(event) {
+                this.log('blurred');
+                this.set('_showResults', false);
+                this.set('_hasInput', false);
+            }
+
+            handlePress(event) {
+                this.log('key ' + event.keyCode + ' pressed');
+                if (event.keyCode == 27) {
+                    this.onClearInput(event);
+                } else if (event.keyCode == 13) {
+                    this.onPerformSearch(event);
+                } else {
+                    this.set('_showResults', true);
+                    var value = this.get('value');
+                    this.set('_hasInput', !(value === undefined || value === null || value === ''));
+                    this.log('filter search for "' + this.value + '" ' + JSON.stringify(event));
                 }
-                this._filteredCache = this.filterCache(value, cache, key);
             }
 
-//            isLike(searchString) {
-//                var self = this;
-//                if (!searchString) {
-//                    // set filter to null to disable filtering
-//                    return null;
-//                } else {
-//                    // return a filter function for the current search string
-//                    searchString = searchString.toLowerCase();
-//                    return function (cacheEntity) {
-//                        if (self.cacheKey !== undefined || self.cacheKey !== null) {
-//                            var last = cacheEntity[self.cacheKey] ? cacheEntity[self.cacheKey].toLowerCase() : '';
-//                            return (last.indexOf(string) != -1);
-//                        } else {
-//                            var last = cacheEntity.toLowerCase();
-//                            return (last.indexOf(string) != -1);
-//                        }
-//                    };
-//                }
-//            }
-
-            filterCache(value, items, key) {
-                var results = items.filter(function (cacheEntity) { // Array.prototype.filter
-                    console.log('.....................................', cacheEntity, self.cacheKey);
+            observeCache(value, cache, key) {
+                this._filteredCache = cache.filter(function (cacheEntity) { // Array.prototype.filter
                     if (key !== undefined || key !== null) {
                         if (cacheEntity[key]) {
                             var last = cacheEntity[key].toLowerCase();
@@ -278,10 +266,8 @@
                         return (last.indexOf(value) != -1);
                     }
                 });
-                this.log('filter out by pattern "' + value + '" ' + results.length + ' from ' + items.length + ' cached items.');
-                return results;
+                this.log('filter out by pattern "' + value + '" ' + this._filteredCache.length + ' from ' + cache.length + ' cached items.');
             }
-
         }
 
         window.customElements.define(PlutoniumSearchInput.is, PlutoniumSearchInput);

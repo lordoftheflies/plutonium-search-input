@@ -4,6 +4,8 @@
 <link rel="import" href="../iron-icon/iron-icon.html">
 <link rel="import" href="../iron-list/iron-list.html">
 <link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-item/paper-item.html">
+<link rel="import" href="../paper-item/paper-item-body.html">
 <link rel="import" href="../paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../paper-spinner/paper-spinner.html">
 <link rel="import" href="shared-icons.html">
@@ -22,6 +24,10 @@
                 border: none;
                 width: 100%;
                 text-align: left;
+            }
+
+            .item {
+                text-decoration: none;
             }
 
             /*paper-input-container {*/
@@ -46,9 +52,17 @@
             <div class="layout horizontal center-justified">
                 <paper-spinner active="[[_loadingCache]]"></paper-spinner>
             </div>
-            <iron-list items="[[_filteredCache]]" as="choice" attr-for-selected="[[cacheKey]]" multi-selection title="List of cached results">
+            <iron-list items="[[_filteredCache]]" as="choice" attr-for-selected="[[cacheKey]]" title="List of cached results" selected-item="{{_selectedResult}}">
                 <template>
-                    <div>[[str(choice, cacheKey)]]</div>
+                    <!--<div>[[str(choice, cacheKey)]]</div>-->
+                    <a href="[[choice.link]]" class="item" tabindex="-1">
+                        <paper-item raised>
+                            <paper-item-body two-line>
+                                <div>[[choice.display_name]]</div>
+                                <div secondary>[[choice.description]]</div>
+                            </paper-item-body>
+                        </paper-item>
+                    </a>
                 </template>
             </iron-list>
         </template>

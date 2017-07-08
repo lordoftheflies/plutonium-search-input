@@ -25,6 +25,7 @@
 
             <plutonium-search-input
                     id="sb"
+                    cache-key="name"
                     label="Search">
             </plutonium-search-input>
 
@@ -55,7 +56,29 @@
                 sbb2.addEventListener('click', function () {
                     sb.dispatchEvent(new CustomEvent('plutonium-search-response', {
                         'detail': {
-                            'data': ['first', 'second', 'third', 'fourth', 'fifth', 'sixth']
+                            'data': [
+                                {
+                                    "name": "alfa",
+                                    "link": "#/items/alfa",
+                                    "display_name": "Alfa element",
+                                    "description": "Description of alfa element"
+                                }, {
+                                    "name": "beta",
+                                    "link": "#/items/beta",
+                                    "display_name": "Beta element",
+                                    "description": "Description of beta element"
+                                }, {
+                                    "name": "gamma",
+                                    "link": "#/items/gamma",
+                                    "display_name": "Gamma element",
+                                    "description": "Description of gamma element"
+                                }, {
+                                    "name": "delta",
+                                    "link": "#/items/delta",
+                                    "display_name": "Delta element",
+                                    "description": "Description of delta element"
+                                }
+                            ]
                         }
                     }));
                 });
